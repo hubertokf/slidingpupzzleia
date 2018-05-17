@@ -16,8 +16,10 @@ class Node():
         self.val = val
 
     def getChildren(self):
-        children = []
-        if(self.left is not None):
-            children.append(self.left)
-        if(self.right is not None):
-            children.append(self.right)
+        # children = []
+
+        return (self.left, self.right)
+        # if(self.left is not None):
+        #     children.append(self.left)
+        # if(self.right is not None):
+        #     children.append(self.right)
