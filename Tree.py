@@ -7,6 +7,7 @@ class Tree():
         self.value = value
         self.children = []
         self.parent = None
+        # add information if is truncated
         if value is not None and children is not None:
             for child in children:
                 self.addChild(child)
@@ -28,3 +29,15 @@ class Tree():
         self.children.append(node)
 
         return self.children
+    
+    def findVal(self, val):
+        if val < self.value:
+            if self.left is None:
+                return str(val)+" Not Found"
+            return self.left.findval(val)
+        elif val > self.value:
+            if self.right is None:
+                return str(val)+" Not Found"
+            return self.right.findval(val)
+        else:
+            print(str(self.value) + ' is found')

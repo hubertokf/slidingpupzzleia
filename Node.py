@@ -5,21 +5,41 @@
 class Node():
     def __init__(self, val):
         self.val = val
-        self.left = None
-        self.right = None
+        self.children = []
         self.parent = None
-
-    def get(self):
+        self.depth = None
+        self.visited = False
+    
+    def __repr__(self):
         return self.val
 
-    def set(self, val):
+    def visit(self):
+        self.visited = True
+
+        return self
+
+    def getValue(self):
+        return self.val
+
+    def setValue(self, val):
         self.val = val
 
-    def getChildren(self):
-        # children = []
+    def getDepth(self):
+        return self.depth
 
-        return (self.left, self.right)
-        # if(self.left is not None):
-        #     children.append(self.left)
-        # if(self.right is not None):
-        #     children.append(self.right)
+    def setDepth(self, depth):
+        self.depth = depth
+
+    def getParent(self):
+        return self.parent
+
+    def setParent(self, n):
+        self.parent = n
+
+    def getChildren(self):
+        return self.children
+
+    def addChildren(self, n):
+        self.children.append(n)
+
+        return self.children
