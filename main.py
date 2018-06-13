@@ -26,6 +26,9 @@ elif sys.argv[2] == "dfs":
     d = p.dfs()
 elif sys.argv[2] == "ids":
     d = p.ids()
+elif sys.argv[2] == "a*":
+    print(p.calculate_misplaced())
+    print(p.manhattan_distance())
 
 time2 = time.clock() - start
 mem_usage = format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, '.2f')

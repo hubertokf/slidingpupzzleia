@@ -3,17 +3,18 @@
 
 import random
 from pandas import *
-import copy, time
+import copy, time, math
 from itertools import count
-
+from operator import itemgetter
 
 class Puzzle():
-    def __init__(self, size, moves=None, board=None):
+    def __init__(self, size, moves=None, board=None, relaxing=None):
+        self.relaxing = relaxing
+        self.size = size
+        self.moves = []
         if (board is None):
-            self.size = size
-            self.moves = []
             self.board = [[cell + (row * size) for cell in range(1, size + 1)] for row in range(size)]
-            self.board[size - 1][size - 1] = 0                    
+            self.board[size - 1][size - 1] = 0
             self.solution = copy.deepcopy(self.board)
         else:
             self.board = board
@@ -23,7 +24,7 @@ class Puzzle():
         else:
             self.shuffle(moves)
             self.original_board = copy.deepcopy(self.board)
-    
+
     def __repr__(self):
         return DataFrame(self.board).to_string(index=False, header=False)
 
@@ -35,13 +36,13 @@ class Puzzle():
 
     def setOriginalBoard(self, board):
         self.original_board = board
-        
+
     def getOriginalBoard(self):
         return self.original_board
 
     # Finds the 0 on the board. Returns a tuple: (row, cell)
     def find_blank(self, board=None):
-        if board is None:                
+        if board is None:
             for row in range(len(self.board)):
                 for cell in range(len(self.board[row])):
                     if self.board[row][cell] == 0:
@@ -52,6 +53,19 @@ class Puzzle():
                     if board[row][cell] == 0:
                         return (row, cell)
         raise Exception("Ops, Could not find the blank cell")
+
+    def find(self, element, board=None):
+        if board is None:
+            for row in range(len(self.board)):
+                for cell in range(len(self.board[row])):
+                    if self.board[row][cell] == element:
+                        return (row, cell)
+        else:
+            for row in range(len(board)):
+                for cell in range(len(board[row])):
+                    if board[row][cell] == element:
+                        return (row, cell)
+        raise Exception("Ops, Could not find the element")
 
     def checkMovePossibilities(self, blank_row, blank_cell, board=None):
         possibleDirections = []
@@ -68,29 +82,49 @@ class Puzzle():
 
         return possibleDirections
 
-    def checkMove(self, origin, destination, board=None):
-        if board is None:            
-            if self.board[origin[0]][origin[1]] is 0 or self.board[destination[0]][destination[1]] is 0:
-                if origin[0] is destination[0] or origin[1] is destination[1]: 
-                    if (abs(origin[0] - destination[0]) is 1) or (abs(origin[1] - destination[1]) is 1):
-                        return True
-                    else:
-                        raise Exception("Invalid movement. Must be Neighboors.")
-                else:
-                    raise Exception("Invalid movement. Must be in the axis.")
+    def _clear(self, position1, position2=None, board=None):
+        if board is not None:
+            if board[position1[0]][position1[1]] is 0 or board[position2[0]][position2[1]] is 0:
+                return True
             else:
-                raise Exception("Invalid movement. Must involve a blank position.")
+                raise Exception(
+                    "Invalid movement. Must involve a blank position.")
         else:
-            if board[origin[0]][origin[1]] is 0 or board[destination[0]][destination[1]] is 0:
-                if origin[0] is destination[0] or origin[1] is destination[1]: 
-                    if (abs(origin[0] - destination[0]) is 1) or (abs(origin[1] - destination[1]) is 1):
-                        return True
-                    else:
-                        raise Exception("Invalid movement. Must be Neighboors.")
-                else:
-                    raise Exception("Invalid movement. Must be in the axis.")
+            if self.board[position1[0]][position1[1]] is 0 or self.board[position2[0]][position2[1]] is 0:
+                return True
             else:
-                raise Exception("Invalid movement. Must involve a blank position.")
+                raise Exception(
+                    "Invalid movement. Must involve a blank position.")
+
+    def _adj(self, position1, position2):
+        if (abs(position1[0] - position2[0]) is 1) or (abs(position1[1] - position2[1]) is 1):
+            return True
+        else:
+            raise Exception("Invalid movement. Must be Neighboors.")
+
+    def _axis(self, position1, position2):
+        if position1[0] is position2[0] or position1[1] is position2[1]:
+            return True
+        else:
+            raise Exception("Invalid movement. Must be in the axis.")
+
+    def checkMove(self, origin, destination, board=None):
+        if board is not None:
+            if self.relaxing != "free" and self.relaxing != "misplaced" and self.relaxing != "manhattan":
+                self._clear(origin, destination, board)
+            if self.relaxing != "free" and self.relaxing != "misplaced":
+                self._adj(origin, destination)
+            if self.relaxing != "free":
+                self._axis(origin, destination)
+        else:
+            if self.relaxing != "free" and self.relaxing != "misplaced" and self.relaxing != "manhattan":
+                self._clear(origin, destination, self.board)
+            if self.relaxing != "free" and self.relaxing != "misplaced":
+                self._adj(origin, destination)
+            if self.relaxing != "free":
+                self._axis(origin, destination)
+
+        return True
 
     def shuffle(self, moves=100):
         blank_row, blank_cell = self.find_blank()
@@ -109,14 +143,14 @@ class Puzzle():
                 blank_cell -= 1
             elif direction == "r":
                 blank_cell += 1
-        
+
         return self.board
 
     def reset(self):
         self.board = copy.deepcopy(self.original_board)
 
         return self.board
-    
+
     def _move(self, origin, destination, board=None):
         try:
             if board is None:
@@ -152,7 +186,7 @@ class Puzzle():
                 elif direction == "l":
                     self._move(piece, (piece[0], piece[1] - 1))
                     self.moves.append("l")
-            
+
                 return self.board
             else:
                 if direction == "u":
@@ -181,13 +215,6 @@ class Puzzle():
             return self.board == self.solution
         else:
             return board == self.solution
-    
-    def rdfs(G, discovered):
-        depth = 0
-        for all edges from discovered to w in G.adjacentEdges(v):
-            if vertex w is not labeled as discovered:
-                depth = depth + 1
-                recursively call DFS(G, w)
 
     def dfs(self):
         list_procs = []
@@ -201,7 +228,7 @@ class Puzzle():
             blank_row, blank_cell = self.find_blank()
             directions = self.checkMovePossibilities(blank_row, blank_cell)
             direction = random.choice(directions)
-            
+
             self.movePiece((blank_row, blank_cell), direction)
             list_procs.append(copy.deepcopy(self.board))
 
@@ -246,7 +273,7 @@ class Puzzle():
         if depth == 0 and status_compare:
             return True
         if depth > 0:
-            
+
             blank_row, blank_cell = self.find_blank(node)
             directions = self.checkMovePossibilities(
                 blank_row, blank_cell, node)
@@ -267,3 +294,75 @@ class Puzzle():
             found = self.dls(self.board, depth)
             if found:
                 return depth
+
+    # def manhattan(self, board=None):
+    #     count = 0
+    #     if board is not None:
+    #         for i in range((self.size**2)-1):
+    #             index = self.find(i + 1, board)
+
+    #             row_diff = abs((i / self.size) - (index / self.size))
+    #             col_diff = abs((i % self.size) - (index % self.size))
+
+    #             count += (row_diff + col_diff)
+
+    #         index = self.find_blank(board)
+    #         row_diff = abs((((self.size**2)-1) / self.size) - (index / self.size))
+    #         col_diff = abs((((self.size**2)-1) % self.size) - (index % self.size))
+    #         count += (row_diff + col_diff)
+    #     else:
+    #         for i in range((self.size**2)-1):
+    #             index = self.find(i + 1)
+
+    #             row_diff = abs((i / self.size) - (index / self.size))
+    #             col_diff = abs((i % self.size) - (index % self.size))
+
+    #             count += (row_diff + col_diff)
+
+    #         index = self.find_blank()
+    #         row_diff = abs((((self.size**2)-1) / self.size) - (index / self.size))
+    #         col_diff = abs((((self.size**2)-1) % self.size) - (index % self.size))
+    #         count += (row_diff + col_diff)
+
+    #     return count
+
+    def manhattan_distance(self, board=None):
+        count = 0
+        if board is not None:
+            for row in range(len(board)):
+                for cell in range(len(board[row])):
+                    if (self.solution[row][cell] == 0):
+                        continue
+                    for rows in range(len(self.solution)):
+                        for cells in range(len(self.solution[rows])):
+                            if (self.solution[rows][cells] == board[row][cell]):
+                                count += (abs(cells - cell) + abs(rows - row))
+                                break
+
+        else:
+            for row in range(len(self.board)):
+                for cell in range(len(self.board[row])):
+                    if (self.solution[row][cell] == 0):
+                        continue
+                    for rows in range(len(self.solution)):
+                        for cells in range(len(self.solution[rows])):
+                            if (self.solution[rows][cells] == self.board[row][cell]):
+                                count += (abs(cells - cell) + abs(rows - row))
+                                break
+
+        return count
+
+    def calculate_misplaced(self, board=None):
+        count = 0
+        if board is not None:
+            for row in range(len(board)):
+                for cell in range(len(board[row])):
+                    if self.solution[row][cell] != board[row][cell]:
+                        count += 1
+        else:
+            for row in range(len(self.board)):
+                for cell in range(len(self.board[row])):
+                    if self.solution[row][cell] != self.board[row][cell]:
+                        count += 1
+    
+        return count
