@@ -279,8 +279,7 @@ class Puzzle():
         if depth > 0:
 
             blank_row, blank_cell = self.find_blank(node)
-            directions = self.checkMovePossibilities(
-                blank_row, blank_cell, node)
+            directions = self.checkMovePossibilities(blank_row, blank_cell, node)
 
             for direction in directions:
                 child = self.movePiece(
@@ -294,8 +293,9 @@ class Puzzle():
 
     def ids(self):
         found = None
-        list_aux = []
         for depth in count(0):
+            list_aux = []
+            
             found = self.dls(self.board, depth, list_aux)
             if found:
                 return depth
