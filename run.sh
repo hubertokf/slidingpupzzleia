@@ -7,7 +7,7 @@ do
     do
         for size in 2 3
         do
-            echo "running $size x $size $search $moves"
+            echo "running $size x $size $search $moves" >> log.txt
             i=0
             while [ $i -lt 10 ]
             do
