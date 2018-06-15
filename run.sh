@@ -1,4 +1,4 @@
-echo "algoritmo,heuristica,tamanho,embaralhamento,profundidade,tempo,memoria"
+header="algoritmo,heuristica,tamanho,embaralhamento,profundidade,tempo,memoria"
 
 for qt in 10 20 30 40 50
 do
@@ -8,7 +8,8 @@ do
         echo "running $s x $s bfs $qt"
         while [ $i -lt 10 ]
         do
-            eval $"python3 main.py $s $qt bfs" #>> log-bsf.txt
+            out=$(python3 main.py $s $qt bfs 2>&1)
+            echo $out >> result.csv
             i=$[$i+1]
         done
 
@@ -16,7 +17,8 @@ do
         i=0
         while [ $i -lt 10 ]
         do
-            eval $"python3 main.py $s $qt dfs" #>> log-dsf.txt
+            out=$(python3 main.py $s $qt dfs 2>&1)
+            echo $out >> result.csv
             i=$[$i+1]
         done
 
@@ -24,7 +26,8 @@ do
         i=0
         while [ $i -lt 10 ]
         do
-            eval $"python3 main.py $s $qt ids" #>> log-dsf.txt
+            out=$(python3 main.py $s $qt ids 2>&1)
+            echo $out >> result.csv
             i=$[$i+1]
         done
 
@@ -32,7 +35,8 @@ do
         i=0
         while [ $i -lt 10 ]
         do
-            eval $"python3 main.py $s $qt a* manhattan" #>> log-dsf.txt
+            out=$(python3 main.py $s $qt a* manhattan 2>&1)
+            echo $out >> result.csv
             i=$[$i+1]
         done
 
@@ -40,7 +44,8 @@ do
         i=0
         while [ $i -lt 10 ]
         do
-            eval $"python3 main.py $s $qt a* misplaced" #>> log-dsf.txt
+            out=$(python3 main.py $s $qt a* misplaced 2>&1)
+            echo $out >> result.csv
             i=$[$i+1]
         done
     done
