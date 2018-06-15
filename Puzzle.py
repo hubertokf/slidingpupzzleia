@@ -6,6 +6,8 @@ from pandas import *
 import copy, time, math
 from itertools import count
 from operator import itemgetter
+import heapq
+
 
 class Puzzle():
     def __init__(self, size, moves=None, board=None, relaxing=None):
@@ -17,6 +19,8 @@ class Puzzle():
             self.board[size - 1][size - 1] = 0
             self.solution = copy.deepcopy(self.board)
         else:
+            self.solution = [[cell + (row * size) for cell in range(1, size + 1)] for row in range(size)]
+            self.solution[size - 1][size - 1] = 0   
             self.board = board
 
         if moves is None:
@@ -326,43 +330,109 @@ class Puzzle():
 
     #     return count
 
-    def manhattan_distance(self, board=None):
+
+    # def manhattan_distance(self, board=None):
+    #     count = 0
+    #     if board is not None:
+    #         for row in range(len(board)):
+    #             for cell in range(len(board[row])):
+    #                 if (self.solution[row][cell] == 0):
+    #                     continue
+    #                 for rows in range(len(self.solution)):
+    #                     for cells in range(len(self.solution[rows])):
+    #                         if (self.solution[rows][cells] == board[row][cell]):
+    #                             count += (abs(cells - cell) + abs(rows - row))
+    #                             break
+
+    #     else:
+    #         for row in range(len(self.board)):
+    #             for cell in range(len(self.board[row])):
+    #                 if (self.solution[row][cell] == 0):
+    #                     continue
+    #                 for rows in range(len(self.solution)):
+    #                     for cells in range(len(self.solution[rows])):
+    #                         if (self.solution[rows][cells] == self.board[row][cell]):
+    #                             print(count)
+    #                             count += (abs(cell - cells) + abs(row - rows))
+    #                             break
+
+    #     return count
+    
+    def manhattan(self, board=None):
         count = 0
         if board is not None:
             for row in range(len(board)):
                 for cell in range(len(board[row])):
-                    if (self.solution[row][cell] == 0):
-                        continue
-                    for rows in range(len(self.solution)):
-                        for cells in range(len(self.solution[rows])):
-                            if (self.solution[rows][cells] == board[row][cell]):
-                                count += (abs(cells - cell) + abs(rows - row))
-                                break
-
+                    pos1, pos2 = self.find(board[row][cell], self.solution)
+                    if board[row][cell] != 0:
+                        if pos1 != row or pos2 != cell:
+                            count += abs(row - pos1) + abs(cell - pos2)
         else:
             for row in range(len(self.board)):
                 for cell in range(len(self.board[row])):
-                    if (self.solution[row][cell] == 0):
-                        continue
-                    for rows in range(len(self.solution)):
-                        for cells in range(len(self.solution[rows])):
-                            if (self.solution[rows][cells] == self.board[row][cell]):
-                                count += (abs(cells - cell) + abs(rows - row))
-                                break
+                    pos1, pos2 = self.find(self.board[row][cell], self.solution)
+                    if self.board[row][cell] != 0:
+                        if pos1 != row or pos2 != cell:
+                            count += abs(row - pos1) + abs(cell - pos2)
 
         return count
 
-    def calculate_misplaced(self, board=None):
+    def misplaced(self, board=None):
         count = 0
         if board is not None:
             for row in range(len(board)):
                 for cell in range(len(board[row])):
-                    if self.solution[row][cell] != board[row][cell]:
+                    if board[row][cell] != 0 and self.solution[row][cell] != board[row][cell]:
                         count += 1
         else:
             for row in range(len(self.board)):
                 for cell in range(len(self.board[row])):
-                    if self.solution[row][cell] != self.board[row][cell]:
+                    if self.board[row][cell] != 0 and self.solution[row][cell] != self.board[row][cell]:
                         count += 1
     
         return count
+
+    def a_star(self, heuristic, board=None):
+        list_A_star = []
+        fila_1 = []
+        fila_2 = []
+        indice_1 = 0
+        indice_2 = 0
+        depth = 0
+
+        status_compare = self.compare(self.board)
+        list_A_star.append(copy.deepcopy(self.board))
+
+        value_heuristic = heuristic(self.board)
+        
+        heapq.heappush(fila_1, (value_heuristic, indice_1, copy.deepcopy(self.board)))
+        indice_1 += 1
+
+        board_ref = heapq.heappop(fila_1)[-1]
+
+        while not status_compare:
+            blank_row, blank_cell = self.find_blank(board_ref)
+            
+            directions = self.checkMovePossibilities(blank_row, blank_cell, board_ref)
+
+            for direction in directions:
+                a = self.movePiece((blank_row, blank_cell), direction, copy.deepcopy(board_ref))
+
+                value_heuristic = heuristic(a)
+
+                F = depth + value_heuristic
+
+                heapq.heappush(fila_1, (F, indice_1, copy.deepcopy(a)))
+                indice_1 += 1
+
+                heapq.heappush(fila_2, (F, indice_2, depth+1))
+                indice_2 += 1
+
+            board_ref = heapq.heappop(fila_1)[-1]
+
+            depth = heapq.heappop(fila_2)[-1]
+            
+            list_A_star.append(board_ref)
+            status_compare = self.compare(board_ref)
+
+        return depth
