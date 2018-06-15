@@ -7,7 +7,8 @@ do
     do
         for size in 2 3
         do
-            echo "running $size x $size $search $moves" >> log.txt
+            date=`date +"%d/%m/%Y %H:%M:%S"`
+            echo "[$date] running $size x $size $search $moves" >> log.txt
             i=0
             while [ $i -lt 10 ]
             do
