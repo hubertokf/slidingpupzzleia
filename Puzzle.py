@@ -221,10 +221,10 @@ class Puzzle():
             return board == self.solution
 
     def dfs(self):
-        list_procs = []
+        list_aux = []
         depth = 0
 
-        list_procs.append(copy.deepcopy(self.board))
+        list_aux.append(copy.deepcopy(self.board))
 
         status_compare = self.compare()
 
@@ -234,7 +234,7 @@ class Puzzle():
             direction = random.choice(directions)
 
             self.movePiece((blank_row, blank_cell), direction)
-            list_procs.append(copy.deepcopy(self.board))
+            list_aux.append(copy.deepcopy(self.board))
 
             status_compare = self.compare()
             depth = depth + 1
@@ -242,12 +242,12 @@ class Puzzle():
         return depth
 
     def bfs(self):
-        list_procs = []
+        list_aux = []
         # list_BFS = []
         depth = 0
 
-        # list_procs.append(copy.deepcopy(self.board))
-        # matrix = list_procs.pop()
+        list_aux.append(copy.deepcopy(self.board))
+        board_ref = list_aux.pop()
 
         status_compare = self.compare()
 
@@ -260,9 +260,9 @@ class Puzzle():
 
             for direction in directions:
                 a = self.movePiece((blank_row, blank_cell), direction, copy.deepcopy(board_ref))
-                list_procs.append(copy.deepcopy(a))
+                list_aux.append(copy.deepcopy(a))
 
-            board_ref = list_procs.pop(0)
+            board_ref = list_aux.pop(0)
             status_compare = self.compare(board_ref)
             # list_BFS.append(copy.deepcopy(board_ref))
 
@@ -271,7 +271,7 @@ class Puzzle():
         # self.board = copy.deepcopy(board_ref)
         return depth
 
-    def dls(self, node, depth):
+    def dls(self, node, depth, list_aux):
         status_compare = self.compare(node)
 
         if depth == 0 and status_compare:
@@ -285,8 +285,8 @@ class Puzzle():
             for direction in directions:
                 child = self.movePiece(
                     (blank_row, blank_cell), direction, copy.deepcopy(node))
-
-                found = self.dls(copy.deepcopy(child), depth-1)
+                list_aux.append(copy.deepcopy(child))
+                found = self.dls(copy.deepcopy(child), depth-1, list_aux)
 
                 if found is not None:
                     return found
@@ -294,69 +294,11 @@ class Puzzle():
 
     def ids(self):
         found = None
+        list_aux = []
         for depth in count(0):
-            found = self.dls(self.board, depth)
+            found = self.dls(self.board, depth, list_aux)
             if found:
                 return depth
-
-    # def manhattan(self, board=None):
-    #     count = 0
-    #     if board is not None:
-    #         for i in range((self.size**2)-1):
-    #             index = self.find(i + 1, board)
-
-    #             row_diff = abs((i / self.size) - (index / self.size))
-    #             col_diff = abs((i % self.size) - (index % self.size))
-
-    #             count += (row_diff + col_diff)
-
-    #         index = self.find_blank(board)
-    #         row_diff = abs((((self.size**2)-1) / self.size) - (index / self.size))
-    #         col_diff = abs((((self.size**2)-1) % self.size) - (index % self.size))
-    #         count += (row_diff + col_diff)
-    #     else:
-    #         for i in range((self.size**2)-1):
-    #             index = self.find(i + 1)
-
-    #             row_diff = abs((i / self.size) - (index / self.size))
-    #             col_diff = abs((i % self.size) - (index % self.size))
-
-    #             count += (row_diff + col_diff)
-
-    #         index = self.find_blank()
-    #         row_diff = abs((((self.size**2)-1) / self.size) - (index / self.size))
-    #         col_diff = abs((((self.size**2)-1) % self.size) - (index % self.size))
-    #         count += (row_diff + col_diff)
-
-    #     return count
-
-
-    # def manhattan_distance(self, board=None):
-    #     count = 0
-    #     if board is not None:
-    #         for row in range(len(board)):
-    #             for cell in range(len(board[row])):
-    #                 if (self.solution[row][cell] == 0):
-    #                     continue
-    #                 for rows in range(len(self.solution)):
-    #                     for cells in range(len(self.solution[rows])):
-    #                         if (self.solution[rows][cells] == board[row][cell]):
-    #                             count += (abs(cells - cell) + abs(rows - row))
-    #                             break
-
-    #     else:
-    #         for row in range(len(self.board)):
-    #             for cell in range(len(self.board[row])):
-    #                 if (self.solution[row][cell] == 0):
-    #                     continue
-    #                 for rows in range(len(self.solution)):
-    #                     for cells in range(len(self.solution[rows])):
-    #                         if (self.solution[rows][cells] == self.board[row][cell]):
-    #                             print(count)
-    #                             count += (abs(cell - cells) + abs(row - rows))
-    #                             break
-
-    #     return count
     
     def manhattan(self, board=None):
         count = 0
